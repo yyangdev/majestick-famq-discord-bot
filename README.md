@@ -132,5 +132,5 @@ MIT
 
 ## Контакты
 
-По вопросам: @Choopstickk @.yyang
+По вопросам в тг @pahandrunow
 ```
