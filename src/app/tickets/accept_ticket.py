@@ -35,15 +35,6 @@ class AcceptReasonModal(discord.ui.Modal):
 
         ticket = get_ticket(self.channel.id)
         applicant = guild.get_member(ticket["user_id"]) if ticket else None
-        role = discord.utils.get(guild.roles, name=config.ROLE_TEST)
-
-        role_ok = False
-        if role and applicant and role < guild.me.top_role:
-            try:
-                await applicant.add_roles(role)
-                role_ok = True
-            except discord.Forbidden:
-                logger.warning(f"Нет прав на выдачу роли {role.name}")
 
         update_ticket_status(self.channel.id, "accepted", interaction.user.id, self.reason.value)
 
@@ -57,12 +48,9 @@ class AcceptReasonModal(discord.ui.Modal):
         embed.add_field(name="Рекрут", value=interaction.user.mention, inline=False)
         await log_ch.send(embed=embed)
         
-        if role_ok and role and applicant:
-            await self.channel.send(f"✅ Заявка принята! {applicant.mention} выдана роль {role.mention}")
-        elif applicant:
-            await self.channel.send(f"✅ Заявка принята! {applicant.mention}")
-        else:
-            await self.channel.send("✅ Заявка принята!")
+        await self.channel.send(
+            f"✅ Заявка принята! {applicant.mention if applicant else ''}"
+        )
         await interaction.response.send_message("Заявка принята. Тикет удаляется.", ephemeral=True)
 
         logger.info(f"Тикет {self.channel.id} принят, удаляю канал")

@@ -25,7 +25,6 @@ class TestConfig(unittest.TestCase):
             config.ROLE_RECRUITER,
             config.ROLE_OWNER,
             config.ROLE_DEP_OWNER,
-            config.ROLE_TEST,
             config.ROLE_ADMIN,
             config.ROLE_SUPPORT,
         ]

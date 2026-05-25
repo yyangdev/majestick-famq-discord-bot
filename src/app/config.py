@@ -15,7 +15,6 @@ ROLE_APPLIED = "Подал заявку" # выдается при создан�
 ROLE_RECRUITER = "𝐑𝐞𝐜𝐫𝐮𝐢𝐭👨🏻‍💻"
 ROLE_OWNER = "𝙊𝙬𝙣𝙚𝙧👑"
 ROLE_DEP_OWNER = "𝘿𝙚𝙥.O𝙬𝙣𝙚𝙧⭐"
-ROLE_TEST = "𝙏𝙚𝙨𝙩🤓"
 ROLE_ADMIN = "Admin"
 ROLE_SUPPORT = "Support"
 
