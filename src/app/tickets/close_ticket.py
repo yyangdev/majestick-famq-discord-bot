@@ -1,5 +1,6 @@
 import discord
 
+
 class CloseButton(discord.ui.Button):
     def __init__(self):
         super().__init__(label="Закрыть тикет", style=discord.ButtonStyle.danger)

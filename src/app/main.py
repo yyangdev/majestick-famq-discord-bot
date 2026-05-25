@@ -1,26 +1,43 @@
+import subprocess
+import sys
+
 import discord
 from discord.ext import commands
-import os
-from dotenv import load_dotenv
-from database.tickets_db import init_db
 
-load_dotenv()
-TOKEN = os.getenv('TOKEN')
+import config
+from database.tickets_db import init_db
+from utils.logger import logger
+
+
+def run_tests():
+    result = subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+    if result.stderr:
+        print(result.stderr)
+    return result.returncode == 0
+
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix=config.CMD_PREFIX, intents=intents)
 
-async def load_extensions():
-    await bot.load_extension('tickets')
 
 @bot.event
 async def on_ready():
     init_db()
-    print(f'Бот {bot.user} запущен')
-    await load_extensions()
-    print('Система заявок загружена')
+    await bot.load_extension("tickets")
+    logger.info(f"Бот {bot.user} запущен")
 
-bot.run(TOKEN)
+
+if __name__ == "__main__":
+    if not run_tests():
+        print("\n❌ Test no passed")
+        sys.exit(1)
+    print("\n✅ All tests passed\n")
+    bot.run(config.TOKEN)
