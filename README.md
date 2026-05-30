@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python)](https://python.org)
 [![Discord.py](https://img.shields.io/badge/discord.py-2.x-5865F2?style=flat-square&logo=discord)](https://discordpy.readthedocs.io/)
-[![Tests](https://img.shields.io/badge/tests-191%2F191%20passed-brightgreen?style=flat-square)](./src/app/tests)
+[![Tests](https://img.shields.io/badge/tests-238%2F238%20passed-brightgreen?style=flat-square)](./src/app/tests)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
 
 </div>
@@ -52,7 +52,7 @@
 | 🔴 **AFK система** | Взятие/снятие AFK с указанием времени возвращения, автоответ при упоминании, статистика |
 | 🗄️ **SQLite база данных** | Локальное хранение без внешнего сервера |
 | ⚙️ **Полностью настраиваемый** | Все тексты, роли и каналы в `config.py` |
-| 🧪 **191 юнит-тест** | Запускаются автоматически перед стартом бота |
+| 🧪 **238 юнит-тестов** | Запускаются автоматически перед стартом бота |
 
 ---
 
@@ -224,16 +224,18 @@ sequenceDiagram
 
 | Модуль | Тестов | Покрытие |
 |--------|--------|----------|
-| `config.py` | 32 | ✅ Конфигурация, тексты, роли |
-| `database/` | 10 | ✅ CRUD заявок, статистика |
-| `tickets/` | 12 | ✅ Создание, принятие, отказ, обзвон |
-| `afk/database` | 25 | ✅ AFK CRUD, кулдауны, статистика |
-| `afk/models` | 27 | ✅ Бизнес-логика, никнеймы |
-| `afk/commands` | 19 | ✅ Команды !afk, !afk_list, !afk_check, !afk_stats |
-| `afk/events` | 11 | ✅ on_message, on_voice_state_update |
-| `afk/views` | 42 | ✅ UI, кнопки, модалки, парсинг времени |
-| `utils/logger` | 5 | ✅ Логирование, форматтеры |
-| **ИТОГО** | **191** | **100% ядерных модулей** |
+| `config.py` | 42 | ✅ Конфигурация, тексты, роли |
+| `database/` | 14 | ✅ CRUD заявок, подключение, статистика |
+| `tickets/` | 30 | ✅ Создание, принятие, отказ, обзвон, колбэки |
+| `afk/database` | 20 | ✅ AFK CRUD, кулдауны, статистика |
+| `afk/models` | 28 | ✅ Бизнес-логика, никнеймы |
+| `afk/commands` | 18 | ✅ Команды !afk, !afk_list, !afk_check, !afk_stats |
+| `afk/events` | 15 | ✅ on_message, on_voice_state_update |
+| `afk/views` | 40 | ✅ UI, кнопки, модалки, парсинг времени |
+| `utils/logger` | 13 | ✅ Логирование, форматтеры, файлы |
+| `main.py` | 9 | ✅ Запуск, on_ready, тесты |
+| `integration` | 10 | ✅ End-to-end сценарии |
+| **ИТОГО** | **238** | **100% всех модулей** |
 
 ---
 
@@ -278,7 +280,7 @@ TOKEN=Ваш_Токен_От_Discord_Bot
 python main.py
 ```
 
-> Перед стартом автоматически выполняются **191 юнит-тест**. При падении хоть одного — бот не запустится.
+> Перед стартом автоматически выполняются **238 юнит-тестов**. При падении хоть одного — бот не запустится.
 
 ---
 
@@ -416,16 +418,22 @@ src/app/
 │   └── logger.py          # Логгер (консоль + файл)
 │
 └── tests/
-    ├── test_config.py     # 32 теста
-    ├── test_database.py   # 10 тестов
-    ├── test_logger.py     # 5 тестов
-    ├── test_tickets.py    # 12 тестов
-    ├── test_commands.py   # 10 тестов
-    ├── test_afk_database.py    # 25 тестов
-    ├── test_afk_models.py      # 27 тестов
-    ├── test_afk_commands.py    # 19 тестов
-    ├── test_afk_events.py      # 11 тестов
-    └── test_afk_views.py       # 42 теста
+    ├── test_config.py              # 42 теста
+    ├── test_database.py            # 9 тестов
+    ├── test_db_connection.py       # 5 тестов
+    ├── test_logger.py              # 4 теста
+    ├── test_logger_extended.py     # 9 тестов
+    ├── test_main.py                # 9 тестов
+    ├── test_tickets.py             # 15 тестов
+    ├── test_tickets_callbacks.py   # 3 теста
+    ├── test_tickets_extended.py    # 10 тестов
+    ├── test_commands.py            # 12 тестов
+    ├── test_afk_database.py        # 20 тестов
+    ├── test_afk_models.py          # 28 тестов
+    ├── test_afk_commands.py        # 18 тестов
+    ├── test_afk_events.py          # 15 тестов
+    ├── test_afk_views.py           # 40 тестов
+    └── test_integration.py         # 10 тестов
 ```
 
 ---
@@ -454,13 +462,36 @@ python -m unittest discover -s tests -v
 ❌ Test no passed
 ```
 
+### Модули тестирования
+
+| Модуль | Тестов | Статус |
+|--------|--------|--------|
+| `test_afk_commands.py` | 18 | ✅ |
+| `test_afk_database.py` | 20 | ✅ |
+| `test_afk_events.py` | 15 | ✅ |
+| `test_afk_models.py` | 28 | ✅ |
+| `test_afk_views.py` | 40 | ✅ |
+| `test_commands.py` | 12 | ✅ |
+| `test_config.py` | 42 | ✅ |
+| `test_database.py` | 9 | ✅ |
+| `test_db_connection.py` | 5 | ✅ |
+| `test_integration.py` | 10 | ✅ |
+| `test_logger.py` | 4 | ✅ |
+| `test_logger_extended.py` | 9 | ✅ |
+| `test_main.py` | 9 | ✅ |
+| `test_tickets.py` | 15 | ✅ |
+| `test_tickets_callbacks.py` | 3 | ✅ |
+| `test_tickets_extended.py` | 10 | ✅ |
+| **ВСЕГО** | **238** | **✅ 100%** |
+
 ### Динамика покрытия
 
 ```
-Базовый функционал:  50 тестов  ████████████░░░░░░░░  26%
-AFK система:         141 тест   ████████████████████  74%
+Базовый функционал:  50 тестов  ████████████░░░░░░░░  21%
+AFK система:         141 тест   ██████████████████░░  59%
+Дополнительные:      47 тестов  ███████░░░░░░░░░░░░░  20%
 ─────────────────────────────────────────────────────
-ИТОГО:               191 тест   ████████████████████ 100%
+ИТОГО:               238 тестов ████████████████████ 100%
 ```
 
 ---
