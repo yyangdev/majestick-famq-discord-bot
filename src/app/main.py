@@ -32,6 +32,7 @@ bot = commands.Bot(command_prefix=config.CMD_PREFIX, intents=intents)
 async def on_ready():
     init_db()
     await bot.load_extension("tickets")
+    await bot.load_extension("afk")
     logger.info(f"Бот {bot.user} запущен")
 
 

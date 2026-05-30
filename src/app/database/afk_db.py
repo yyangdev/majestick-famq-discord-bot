@@ -1,0 +1,156 @@
+﻿import re
+from datetime import datetime, timedelta
+from typing import Optional, List
+
+from .db import get_db
+
+
+def init_afk_db():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS afk_users (
+            user_id INTEGER NOT NULL,
+            guild_id INTEGER NOT NULL,
+            afk_reason TEXT DEFAULT 'Отошёл',
+            afk_since TEXT NOT NULL,
+            estimated_return TEXT,
+            is_afk INTEGER DEFAULT 1,
+            PRIMARY KEY (user_id, guild_id)
+        )
+    """)
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_afk_users_guild ON afk_users(guild_id)
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS afk_cooldown (
+            mentioner_id INTEGER NOT NULL,
+            afk_user_id INTEGER NOT NULL,
+            last_reply TEXT NOT NULL,
+            PRIMARY KEY (mentioner_id, afk_user_id)
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS afk_stats (
+            user_id INTEGER PRIMARY KEY,
+            total_afk_count INTEGER DEFAULT 0,
+            total_afk_seconds INTEGER DEFAULT 0,
+            longest_afk_seconds INTEGER DEFAULT 0
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def set_afk(user_id: int, guild_id: int, reason: str, afk_since: str, estimated_return: Optional[str] = None):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO afk_users (user_id, guild_id, afk_reason, afk_since, estimated_return, is_afk)
+        VALUES (?, ?, ?, ?, ?, 1)
+        ON CONFLICT(user_id, guild_id) DO UPDATE SET
+            afk_reason = excluded.afk_reason,
+            afk_since = excluded.afk_since,
+            estimated_return = excluded.estimated_return,
+            is_afk = 1
+    """, (user_id, guild_id, reason, afk_since, estimated_return))
+    conn.commit()
+    conn.close()
+
+
+def remove_afk(user_id: int, guild_id: int) -> bool:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM afk_users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+    deleted = c.rowcount > 0
+    conn.commit()
+    conn.close()
+    return deleted
+
+
+def get_afk_user(user_id: int, guild_id: int):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM afk_users WHERE user_id = ? AND guild_id = ?", (user_id, guild_id))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+
+def get_all_afk(guild_id: int) -> list:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT * FROM afk_users WHERE guild_id = ? AND is_afk = 1 ORDER BY afk_since ASC
+    """, (guild_id,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+def check_cooldown(mentioner_id: int, afk_user_id: int, cooldown_seconds: int = 30) -> bool:
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT last_reply FROM afk_cooldown WHERE mentioner_id = ? AND afk_user_id = ?
+    """, (mentioner_id, afk_user_id))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return True
+    last = datetime.fromisoformat(row["last_reply"])
+    return (datetime.now() - last).total_seconds() >= cooldown_seconds
+
+
+def set_cooldown(mentioner_id: int, afk_user_id: int):
+    conn = get_db()
+    c = conn.cursor()
+    now = datetime.now().isoformat()
+    c.execute("""
+        INSERT INTO afk_cooldown (mentioner_id, afk_user_id, last_reply)
+        VALUES (?, ?, ?)
+        ON CONFLICT(mentioner_id, afk_user_id) DO UPDATE SET
+            last_reply = excluded.last_reply
+    """, (mentioner_id, afk_user_id, now))
+    conn.commit()
+    conn.close()
+
+
+def get_user_stats(user_id: int):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM afk_stats WHERE user_id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+
+def update_stats_on_set(user_id: int):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO afk_stats (user_id, total_afk_count, total_afk_seconds, longest_afk_seconds)
+        VALUES (?, 1, 0, 0)
+        ON CONFLICT(user_id) DO UPDATE SET
+            total_afk_count = total_afk_count + 1
+    """, (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def update_stats_on_remove(user_id: int, afk_seconds: int):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO afk_stats (user_id, total_afk_count, total_afk_seconds, longest_afk_seconds)
+        VALUES (?, 0, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+            total_afk_seconds = total_afk_seconds + excluded.total_afk_seconds,
+            longest_afk_seconds = CASE
+                WHEN longest_afk_seconds < excluded.longest_afk_seconds
+                THEN excluded.longest_afk_seconds
+                ELSE longest_afk_seconds
+            END
+    """, (user_id, afk_seconds, afk_seconds))
+    conn.commit()
+    conn.close()
